@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using TelegramAssistant.Contracts;
 using TelegramAssistant.Types;
 
-namespace TelegramAssistant.Mocks
+namespace TelegramAssistant.ExchangeRateProviders
 {
-    internal class SberbankExchangeRatesProvider : IExchangeRatesProvider
+    internal class MockSberbankExchangeRatesProvider : IExchangeRatesProvider
     {
         private const int _taskDelay = 700;
         private const int _maxAssetValue = 500;

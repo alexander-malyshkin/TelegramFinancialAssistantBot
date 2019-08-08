@@ -1,7 +1,4 @@
 ﻿using System;
-using System.ComponentModel.Design;
-using TelegramAssistant.Contracts;
-using TelegramAssistant.Mocks;
 
 namespace TelegramAssistant
 {
@@ -9,7 +6,9 @@ namespace TelegramAssistant
     {
         static void Main(string[] args)
         {
-            
+            var app = new App();
+            Console.ReadLine();
+            app.StopReceiving();
         }
     }
 }

@@ -2,6 +2,6 @@
 {
     public class AppSettings
     {
-        public string BotApiKey { get; set; }
+        public string SensitiveConfigFile { get; set; }
     }
 }
