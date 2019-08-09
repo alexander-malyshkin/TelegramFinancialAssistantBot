@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types.Enums;
 using TelegramAssistant.Commands;
+using TelegramAssistant.Contracts;
 using TelegramAssistant.Settings;
 using TelegramAssistant.Types;
 using TelegramAssistant.Types.Requests;
@@ -19,15 +22,20 @@ namespace TelegramAssistant
     {
         private AppSettings AppSettings { get; }
         private SensitiveSettings SensitiveConfiguration { get; }
-        private static TelegramBotClient Bot { get; set; }
+        public TelegramBotClient Bot { get; }
+        private IServiceContainer ServiceContainer { get; }
 
-        private IList<string> _supportedAssets = Enum.GetNames(typeof(Asset));
+        private ICollection<string> _supportedAssets;
 
         private static string _quoteUsageFormat;
+        private string _internalErrorMsg = "Что-то пошло не так";
+        private string _notImplementedExcMsg = "Данный функционал не поддерживается, свяжитесь с разработчиком";
         private const int _chatInteractionDelay = 500;
 
-        public App()
+        public App(IServiceContainer sc)
         {
+            ServiceContainer = sc;
+
             var settingsDir = Path.Combine(Directory.GetCurrentDirectory(), "Settings");
             var configLocation = Path.Combine(settingsDir, "AppSettings.json");
             var configurationBuilder = new ConfigurationBuilder()
@@ -50,11 +58,13 @@ namespace TelegramAssistant
             SetupUsages();
         }
 
-        private void SetupUsages()
+        private async Task SetupUsages()
         {
-            _quoteUsageFormat = @"/quote <название_актива> <оператор> <значение_актива> then <действие>. \n"
-                                + $"Поддерживаемые активы {string.Join(',', _supportedAssets)}"
-                                + $"Операторы: >, >=, <, <= \n"
+            var ratesProvider = (IExchangeRatesProvider) ServiceContainer.GetService(typeof(IExchangeRatesProvider));
+            _supportedAssets = await ratesProvider.GetAssets();
+            _quoteUsageFormat = @"/quote <название_актива> <оператор> <значение_актива> then <действие>. "
+                                + $"Поддерживаемые активы {string.Join(',', _supportedAssets)}. "
+                                + $"Операторы: >, >=, <, <=. "
                                 + $"Действия: signal";
         }
 
@@ -69,36 +79,58 @@ namespace TelegramAssistant
             Bot.StopReceiving();
         }
 
-        private static async void BotOnMessage(object sender, MessageEventArgs e)
+        private async void BotOnMessage(object sender, MessageEventArgs e)
         {
             var message = e.Message;
 
             if (message == null || message.Type != MessageType.Text) return;
 
             var cmdArgs = message.Text.Split(' ');
-            switch (cmdArgs.First())
+
+            try
             {
-                case QuoteValueCriterionSubscriptionRequest.CommandShortcutStatic: // e.g. - /quote sber >250 then signal
-                    await Bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
-                    await Task.Delay(_chatInteractionDelay);
-                    try
-                    {
+                switch (cmdArgs.First())
+                {
+                    case QuoteValueCriterionSubscriptionRequest.CommandShortcutStatic
+                        : // e.g. - /quote sber >250 then signal
+                        await Bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+                        await Task.Delay(_chatInteractionDelay);
                         var quoteRequest = new QuoteValueCriterionSubscriptionRequest(cmdArgs);
-                        var quoteCmd = new QuoteValueCriterionSubscriptionCommand(quoteRequest);
+                        var quoteCmd = new QuoteValueCriterionSubscriptionCommand(quoteRequest, 
+                            (INotificationSubscriber) ServiceContainer.GetService(typeof(INotificationSubscriber)),
+                            (IExchangeRatesProvider) ServiceContainer.GetService(typeof(IExchangeRatesProvider)));
+                        var requestValid = await quoteCmd.Validate();
+
+                        if (!requestValid)
+                        {
+                            await Bot.SendTextMessageAsync(message.Chat.Id, _quoteUsageFormat);
+                            break;
+                        }
+
                         var response = await quoteCmd.Process();
                         await Bot.SendTextMessageAsync(message.Chat.Id, response.ResultMessage);
-                    }
-                    catch (Exception)
-                    {
-                        await Bot.SendTextMessageAsync(message.Chat.Id, _quoteUsageFormat);
-                    }
 
-                    break;
-                default:
-                    await Bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
-                    await Task.Delay(_chatInteractionDelay);
-                    await Bot.SendTextMessageAsync(message.Chat.Id, _quoteUsageFormat);
-                    break;
+
+
+                        break;
+                    default:
+                        await Bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
+                        await Task.Delay(_chatInteractionDelay);
+                        await Bot.SendTextMessageAsync(message.Chat.Id, _quoteUsageFormat);
+                        break;
+                }
+            }
+            catch (ArgumentException)
+            {
+                await Bot.SendTextMessageAsync(message.Chat.Id, _quoteUsageFormat);
+            }
+            catch (NotImplementedException)
+            {
+                await Bot.SendTextMessageAsync(message.Chat.Id, _notImplementedExcMsg);
+            }
+            catch (Exception)
+            {
+                await Bot.SendTextMessageAsync(message.Chat.Id, _internalErrorMsg);
             }
         }
     }
