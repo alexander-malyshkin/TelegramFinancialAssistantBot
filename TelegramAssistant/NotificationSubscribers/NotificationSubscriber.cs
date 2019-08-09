@@ -2,18 +2,39 @@
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using TelegramAssistant.Contracts;
-using TelegramAssistant.Types.Requests;
+using TelegramAssistant.Types;
 
 namespace TelegramAssistant.NotificationSubscribers
 {
     class NotificationSubscriber : INotificationSubscriber
     {
-        private static ConcurrentQueue<Action<RequestBase>> _subscriptionsQueue 
-            = new ConcurrentQueue<Action<RequestBase>>();
+        private static ConcurrentQueue<NotificationTask> _subscriptionsQueue 
+            = new ConcurrentQueue<NotificationTask>();
 
-        public async Task Subscribe(Action<RequestBase> action)
+        private readonly IExchangeRatesProvider _exchangeRatesProvider;
+
+        public NotificationSubscriber(IExchangeRatesProvider exchangeRatesProvider)
         {
-            _subscriptionsQueue.Enqueue(action);
+            _exchangeRatesProvider = exchangeRatesProvider;
+        }
+
+        public async Task Subscribe(string asset, Func<decimal, bool> predicate)
+        {
+            var assetValue = await _exchangeRatesProvider.GetAssetValue(asset);
+            if (predicate(assetValue))
+                throw new NotSupportedException("Условие по данному активу уже выполняется");
+
+            _subscriptionsQueue.Enqueue(new NotificationTask
+            {
+                Asset = asset,
+                Predicate = predicate
+            });
+        }
+
+        public async Task<bool> CanSubscribe(string asset, Func<decimal, bool> predicate)
+        {
+            var assetValue = await _exchangeRatesProvider.GetAssetValue(asset);
+            return !predicate(assetValue);
         }
     }
 }
