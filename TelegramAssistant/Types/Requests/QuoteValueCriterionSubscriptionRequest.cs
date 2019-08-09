@@ -7,13 +7,13 @@ namespace TelegramAssistant.Types.Requests
     internal class QuoteValueCriterionSubscriptionRequest : RequestBase
     {
         private const int _minArgsQuantity = 4;
-        private const int _assetInd = 2;
+        private const int _assetInd = 1;
 
         public QuoteValueCriterionSubscriptionRequest()
         {
         }
 
-        internal const string CommandShortcutStatic = "quote";
+        internal const string CommandShortcutStatic = "/quote";
 
         internal override string CommandShortcut => CommandShortcutStatic;
 
@@ -35,31 +35,37 @@ namespace TelegramAssistant.Types.Requests
             if (args[_assetInd].Contains(">="))
             {
                 var value = decimal.Parse(args[_assetInd].Split('=').Last());
-                Criterion = d => d >= value;
+                Predicate = d => d >= value;
+                Operator = ">=";
             }
             else if (args[_assetInd].Contains("<="))
             {
                 var value = decimal.Parse(args[_assetInd].Split('=').Last());
-                Criterion = d => d <= value;
+                Predicate = d => d <= value;
+                Operator = "<=";
             }
             else if (args[_assetInd].Contains(">"))
             {
                 var value = decimal.Parse(args[_assetInd].Split('>').Last());
-                Criterion = d => d > value;
+                Predicate = d => d > value;
+                Operator = ">";
             }
             else if (args[_assetInd].Contains("<"))
             {
                 var value = decimal.Parse(args[_assetInd].Split('<').Last());
-                Criterion = d => d < value;
+                Predicate = d => d < value;
+                Operator = "<";
             }
             else if (args[_assetInd].Contains("="))
             {
                 var value = decimal.Parse(args[_assetInd].Split('=').Last());
-                Criterion = d => d == value;
+                Predicate = d => d == value;
+                Operator = "=";
             }
         }
 
         public string Asset { get; set; }
-        public Func<decimal, bool> Criterion { get; set; }
+        public Func<decimal, bool> Predicate { get; set; }
+        public string Operator { get; set; }
     }
 }
