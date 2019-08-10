@@ -25,6 +25,7 @@ namespace TelegramAssistant
             var sc2 = new ServiceContainer();
             sc2.AddService(typeof(QueuedHostedService), new QueuedHostedService(new BackgroundTaskQueue()));
             sc2.AddService(typeof(IBackgroundTaskQueue), new BackgroundTaskQueue());
+            sc2.AddService(typeof(IExchangeRatesProvider), new MockExchangeRatesProvider());
             sc2.AddService(typeof(INotificationSubscriber), new NotificationSubscriber(new MockExchangeRatesProvider()));
             
             var app = new App(sc2);
