@@ -6,14 +6,12 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types.Enums;
 using TelegramAssistant.Commands;
 using TelegramAssistant.Contracts;
 using TelegramAssistant.Settings;
-using TelegramAssistant.Types;
 using TelegramAssistant.Types.Requests;
 
 namespace TelegramAssistant
@@ -58,10 +56,10 @@ namespace TelegramAssistant
             SetupUsages();
         }
 
-        private async Task SetupUsages()
+        private void SetupUsages()
         {
             var ratesProvider = (IExchangeRatesProvider) ServiceContainer.GetService(typeof(IExchangeRatesProvider));
-            _supportedAssets = await ratesProvider.GetAssets();
+            _supportedAssets = (ratesProvider.GetAssets()).GetAwaiter().GetResult();
             _quoteUsageFormat = @"/quote <название_актива> <оператор> <значение_актива> then <действие>. "
                                 + $"Поддерживаемые активы {string.Join(',', _supportedAssets)}. "
                                 + $"Операторы: >, >=, <, <=. "
