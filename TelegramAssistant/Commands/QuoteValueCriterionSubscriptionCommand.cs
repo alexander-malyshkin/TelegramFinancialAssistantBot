@@ -21,7 +21,7 @@ namespace TelegramAssistant.Commands
         {
             _request = request ?? throw new ArgumentException($"Не указан запрос {nameof(QuoteValueCriterionSubscriptionRequest)}");
             _notificationSubscriber = notificationSubscriber ?? throw new ArgumentException($"Не указан {nameof(INotificationSubscriber)}");
-            _exchangeRatesProvider = exchangeRatesProvider;
+            _exchangeRatesProvider = exchangeRatesProvider ?? throw new ArgumentException("Не указан провайдер котировок");
         }
 
         public async Task<bool> Validate()
