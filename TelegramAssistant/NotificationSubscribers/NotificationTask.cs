@@ -6,6 +6,7 @@ namespace TelegramAssistant.NotificationSubscribers
     class NotificationTask
     {
         public string Asset { get; set; }
+        public long ChatId { get; set; }
         public Func<decimal, bool> Predicate { get; set; }
     }
 }

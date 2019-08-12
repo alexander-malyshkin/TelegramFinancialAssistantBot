@@ -9,15 +9,11 @@ namespace TelegramAssistant.Types.Requests
         private const int _minArgsQuantity = 4;
         private const int _assetInd = 1;
 
-        public QuoteValueCriterionSubscriptionRequest()
-        {
-        }
-
         internal const string CommandShortcutStatic = "/quote";
 
         internal override string CommandShortcut => CommandShortcutStatic;
 
-        public QuoteValueCriterionSubscriptionRequest(IReadOnlyList<string> args)
+        public QuoteValueCriterionSubscriptionRequest(IReadOnlyList<string> args, long chatId)
         {
             
             if(args.Count < _minArgsQuantity
@@ -26,7 +22,7 @@ namespace TelegramAssistant.Types.Requests
                 throw new ArgumentException();
 
             Asset = args[_assetInd];
-
+            ChatId = chatId;
             ConstructCriterionDelegate(args);
         }
 
@@ -65,6 +61,7 @@ namespace TelegramAssistant.Types.Requests
         }
 
         public string Asset { get; set; }
+        public long ChatId { get; set; }
         public Func<decimal, bool> Predicate { get; set; }
         public string Operator { get; set; }
     }
