@@ -1,8 +1,8 @@
 ﻿namespace TelegramAssistant.Settings
 {
-    class NotificationSettings
+    public class NotificationSettings
     {
-        internal int IntervalMilliseconds { get; set; }
-        internal int DueTimeSpanSeconds { get; set; }
+        public int IntervalMilliseconds { get; set; }
+        public int DueTimeSpanSeconds { get; set; }
     }
 }

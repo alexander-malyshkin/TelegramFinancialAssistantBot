@@ -1,8 +1,8 @@
 ﻿namespace TelegramAssistant.Settings
 {
-    internal class AppSettings
+    public class AppSettings
     {
-        internal string SensitiveConfigFile { get; set; }
-        internal NotificationSettings NotificationSettings { get; set; }
+        public string SensitiveConfigFile { get; set; }
+        public NotificationSettings NotificationSettings { get; set; }
     }
 }
