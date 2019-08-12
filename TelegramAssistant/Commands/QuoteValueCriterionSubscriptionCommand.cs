@@ -26,7 +26,7 @@ namespace TelegramAssistant.Commands
 
         public async Task<bool> Validate()
         {
-
+            if (_request.ChatId == 0) return false;
             var supportedAssets = await _exchangeRatesProvider.GetAssets();
             if (supportedAssets.All(supportedAsset => !_request.Asset.StartsWith(supportedAsset)))
             {
@@ -41,13 +41,24 @@ namespace TelegramAssistant.Commands
         {
             try
             {
-                var canSubscribe = await _notificationSubscriber.CanSubscribe(_asset, _request.Predicate);
-                if(!canSubscribe)
+                var conditionAlreadyApplies = await _notificationSubscriber.ConditionAlreadyApplies(_asset, _request.ChatId, _request.Predicate);
+                if(conditionAlreadyApplies)
                 {
                     return new QuoteValueCriterionSubscriptionResponse
                     {
                         Success = true,
                         ResultMessage = "Указанный актив уже удовлетворяет условию"
+                    };
+                }
+
+                var alreadySubscribed =
+                    await _notificationSubscriber.AlreadySubscribed(_asset, _request.ChatId, _request.Predicate);
+                if (alreadySubscribed)
+                {
+                    return new QuoteValueCriterionSubscriptionResponse
+                    {
+                        Success = true,
+                        ResultMessage = "Вы уже подписаны на данное событие"
                     };
                 }
             }
@@ -62,7 +73,7 @@ namespace TelegramAssistant.Commands
 
             try
             {
-                await _notificationSubscriber.Subscribe(_asset, _request.Predicate);
+                await _notificationSubscriber.Subscribe(_asset, _request.ChatId, _request.Predicate);
                 return new QuoteValueCriterionSubscriptionResponse
                 {
                     Success = true,

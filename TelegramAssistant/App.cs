@@ -18,7 +18,7 @@ namespace TelegramAssistant
 {
     public class App
     {
-        private AppSettings AppSettings { get; }
+        internal AppSettings AppSettings { get; }
         private SensitiveSettings SensitiveConfiguration { get; }
         public TelegramBotClient Bot { get; }
         private IServiceContainer ServiceContainer { get; }
@@ -41,6 +41,9 @@ namespace TelegramAssistant
 
             IConfiguration configuration = configurationBuilder.Build();
             AppSettings = new SettingsBuilder<AppSettings>(configuration).Build();
+
+            if (AppSettings.NotificationSettings == null)
+                throw new ArgumentNullException(nameof(NotificationSettings));
 
             var sensitiveConfigFile = AppSettings.SensitiveConfigFile;
             var sensConfBuilder = new ConfigurationBuilder()
@@ -90,10 +93,10 @@ namespace TelegramAssistant
                 switch (cmdArgs.First())
                 {
                     case QuoteValueCriterionSubscriptionRequest.CommandShortcutStatic
-                        : // e.g. - /quote sber >250 then signal
+                        : // e.g. - /quote Sberbank>250 then signal
                         await Bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
                         await Task.Delay(_chatInteractionDelay);
-                        var quoteRequest = new QuoteValueCriterionSubscriptionRequest(cmdArgs);
+                        var quoteRequest = new QuoteValueCriterionSubscriptionRequest(cmdArgs, message.Chat.Id);
                         var quoteCmd = new QuoteValueCriterionSubscriptionCommand(quoteRequest, 
                             (INotificationSubscriber) ServiceContainer.GetService(typeof(INotificationSubscriber)),
                             (IExchangeRatesProvider) ServiceContainer.GetService(typeof(IExchangeRatesProvider)));
@@ -107,10 +110,8 @@ namespace TelegramAssistant
 
                         var response = await quoteCmd.Process();
                         await Bot.SendTextMessageAsync(message.Chat.Id, response.ResultMessage);
-
-
-
                         break;
+
                     default:
                         await Bot.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
                         await Task.Delay(_chatInteractionDelay);

@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using TelegramAssistant.Contracts;
-using TelegramAssistant.Types;
 
 namespace TelegramAssistant.NotificationSubscribers
 {
     class NotificationSubscriber : INotificationSubscriber
     {
-        private static ConcurrentQueue<NotificationTask> _subscriptionsQueue 
-            = new ConcurrentQueue<NotificationTask>();
+        internal static Collection<NotificationTask> Subscriptions { get; } 
+            = new Collection<NotificationTask>();
 
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
 
@@ -18,23 +18,33 @@ namespace TelegramAssistant.NotificationSubscribers
             _exchangeRatesProvider = exchangeRatesProvider;
         }
 
-        public async Task Subscribe(string asset, Func<decimal, bool> predicate)
+        public async Task Subscribe(string asset, long chatId, Func<decimal, bool> predicate)
         {
             var assetValue = await _exchangeRatesProvider.GetAssetValue(asset);
             if (predicate(assetValue))
                 throw new NotSupportedException("Условие по данному активу уже выполняется");
 
-            _subscriptionsQueue.Enqueue(new NotificationTask
+            if(await AlreadySubscribed(asset, chatId, predicate))
+                throw new NotSupportedException("Вы уже подписаны на данное событие");
+
+            Subscriptions.Add(new NotificationTask
             {
                 Asset = asset,
+                ChatId = chatId,
                 Predicate = predicate
             });
         }
 
-        public async Task<bool> CanSubscribe(string asset, Func<decimal, bool> predicate)
+        public async Task<bool> ConditionAlreadyApplies(string asset, long chatId, Func<decimal, bool> predicate)
         {
             var assetValue = await _exchangeRatesProvider.GetAssetValue(asset);
-            return !predicate(assetValue);
+            return predicate(assetValue);
+        }
+
+        public async Task<bool> AlreadySubscribed(string asset, long chatId, Func<decimal, bool> predicate)
+        {
+            return Subscriptions.Any(s => s.Asset.Equals(asset, StringComparison.InvariantCultureIgnoreCase)
+                                                && s.ChatId == chatId && s.Predicate == predicate);
         }
     }
 }
