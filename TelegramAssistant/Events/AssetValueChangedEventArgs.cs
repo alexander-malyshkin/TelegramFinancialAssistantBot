@@ -2,7 +2,7 @@
 
 namespace TelegramAssistant.Events
 {
-    class AssetValueChangedEventArgs : EventArgs
+    public class AssetValueChangedEventArgs : EventArgs
     {
         public string Asset { get; set; }
         public long ChatId { get; set; }
