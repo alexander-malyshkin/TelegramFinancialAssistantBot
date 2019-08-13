@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,36 +20,30 @@ namespace TelegramAssistant
         internal AppSettings AppSettings { get; }
         private SensitiveSettings SensitiveConfiguration { get; }
         public TelegramBotClient Bot { get; }
-        private IServiceContainer ServiceContainer { get; }
 
         private ICollection<string> _supportedAssets;
 
         private static string _quoteUsageFormat;
         private string _internalErrorMsg = "Что-то пошло не так";
         private string _notImplementedExcMsg = "Данный функционал не поддерживается, свяжитесь с разработчиком";
+        private IExchangeRatesProvider _ratesProvider;
+        private INotificationSubscriber _notificationSubscriber;
         private const int _chatInteractionDelay = 500;
 
-        public App(IServiceContainer sc)
+        public App(IExchangeRatesProvider ratesProvider, INotificationSubscriber ntSubscriber,
+            AppSettings appSettings, SensitiveSettings sensitiveConfiguration)
         {
-            ServiceContainer = sc;
+            _ratesProvider = ratesProvider;
+            _notificationSubscriber = ntSubscriber;
 
-            var settingsDir = Path.Combine(Directory.GetCurrentDirectory(), "Settings");
-            var configLocation = Path.Combine(settingsDir, "AppSettings.json");
-            var configurationBuilder = new ConfigurationBuilder()
-                .AddJsonFile(configLocation);
+            AppSettings = appSettings;
+            if(AppSettings == null)
+                throw new ArgumentNullException(nameof(AppSettings));
 
-            IConfiguration configuration = configurationBuilder.Build();
-            AppSettings = new SettingsBuilder<AppSettings>(configuration).Build();
-
+            SensitiveConfiguration = sensitiveConfiguration;
             if (AppSettings.NotificationSettings == null)
                 throw new ArgumentNullException(nameof(NotificationSettings));
-
-            var sensitiveConfigFile = AppSettings.SensitiveConfigFile;
-            var sensConfBuilder = new ConfigurationBuilder()
-                .AddJsonFile(sensitiveConfigFile);
-            IConfiguration sensConfiguration = sensConfBuilder.Build();
-            SensitiveConfiguration = new SettingsBuilder<SensitiveSettings>(sensConfiguration).Build();
-
+            
             Bot = SensitiveConfiguration.ProxyEnabled ? 
                 new TelegramBotClient(SensitiveConfiguration.BotApiKey, new WebProxy(SensitiveConfiguration.Proxy))
                 : new TelegramBotClient(SensitiveConfiguration.BotApiKey);
@@ -61,8 +54,7 @@ namespace TelegramAssistant
 
         private void SetupUsages()
         {
-            var ratesProvider = (IExchangeRatesProvider) ServiceContainer.GetService(typeof(IExchangeRatesProvider));
-            _supportedAssets = (ratesProvider.GetAssets()).GetAwaiter().GetResult();
+            _supportedAssets = (_ratesProvider.GetAssets()).GetAwaiter().GetResult();
             _quoteUsageFormat = @"/quote <название_актива> <оператор> <значение_актива> then <действие>. "
                                 + $"Поддерживаемые активы {string.Join(',', _supportedAssets)}. "
                                 + $"Операторы: >, >=, <, <=. "
@@ -72,6 +64,10 @@ namespace TelegramAssistant
         private void ConfigureBot()
         {
             Bot.OnMessage += BotOnMessage;
+        }
+
+        public void StartReceiving()
+        {
             Bot.StartReceiving(Array.Empty<UpdateType>());
         }
 
@@ -98,8 +94,7 @@ namespace TelegramAssistant
                         await Task.Delay(_chatInteractionDelay);
                         var quoteRequest = new QuoteValueCriterionSubscriptionRequest(cmdArgs, message.Chat.Id);
                         var quoteCmd = new QuoteValueCriterionSubscriptionCommand(quoteRequest, 
-                            (INotificationSubscriber) ServiceContainer.GetService(typeof(INotificationSubscriber)),
-                            (IExchangeRatesProvider) ServiceContainer.GetService(typeof(IExchangeRatesProvider)));
+                            _notificationSubscriber, _ratesProvider);
                         var requestValid = await quoteCmd.Validate();
 
                         if (!requestValid)
