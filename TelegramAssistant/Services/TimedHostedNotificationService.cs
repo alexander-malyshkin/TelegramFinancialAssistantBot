@@ -2,25 +2,31 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using TelegramAssistant.Contracts;
 using TelegramAssistant.Events;
 using TelegramAssistant.NotificationSubscribers;
+using TelegramAssistant.Settings;
 
 namespace TelegramAssistant.Services
 {
     class TimedHostedNotificationService : TimedHostedServiceBase
     {
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
+        private readonly INotificationSubscriber _notificationSubscriber;
         internal event EventHandler<AssetValueChangedEventArgs> AssetValueChangedEvent;
 
         public TimedHostedNotificationService(
-            int intervalMs, 
-            int dueTimeSpanSeconds, 
-            IExchangeRatesProvider exchangeRatesProvider) 
-            : base(intervalMs, 
-                dueTimeSpanSeconds)
+            NotificationSettings notificationSettings, 
+            IExchangeRatesProvider exchangeRatesProvider,
+            IAssetValueChangedEventHandler assetValueChangedEventHandler, 
+            INotificationSubscriber notificationSubscriber) 
+            : base(notificationSettings.IntervalMilliseconds, 
+                notificationSettings.DueTimeSpanSeconds)
         {
             _exchangeRatesProvider = exchangeRatesProvider;
+            _notificationSubscriber = notificationSubscriber;
+            AssetValueChangedEvent += async (sender, args) => await assetValueChangedEventHandler.Handle(sender, args);
         }
 
         protected override void DoWork(object state)
@@ -43,7 +49,9 @@ namespace TelegramAssistant.Services
 
                 var matchedConditions = notificationSubscriptions.Where(ns =>
                     ns.Predicate(assetValue) &&
-                    ns.Asset.Equals(randomAsset, StringComparison.InvariantCultureIgnoreCase));
+                    ns.Asset.Equals(randomAsset, StringComparison.InvariantCultureIgnoreCase))
+                    .ToArray();
+
                 foreach (var matchedCondition in matchedConditions)
                 {
                     AssetValueChangedEvent?.Invoke(this, new AssetValueChangedEventArgs
@@ -52,6 +60,11 @@ namespace TelegramAssistant.Services
                         ChatId = matchedCondition.ChatId,
                         Value = assetValue
                     });
+                }
+
+                foreach (var cond in matchedConditions)
+                {
+                    _notificationSubscriber.Unsubscribe(cond.Asset, cond.ChatId, cond.Predicate);
                 }
             }
         }
