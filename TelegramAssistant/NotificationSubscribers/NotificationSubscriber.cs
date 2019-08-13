@@ -8,7 +8,7 @@ namespace TelegramAssistant.NotificationSubscribers
 {
     class NotificationSubscriber : INotificationSubscriber
     {
-        internal static Collection<NotificationTask> Subscriptions { get; } 
+        public static Collection<NotificationTask> Subscriptions { get; } 
             = new Collection<NotificationTask>();
 
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
@@ -35,6 +35,19 @@ namespace TelegramAssistant.NotificationSubscribers
             });
         }
 
+        public async Task Unsubscribe(string asset, long chatId, Func<decimal, bool> predicate)
+        {
+            var ntTask = Subscriptions.FirstOrDefault(s => 
+                s.Asset.Equals(asset, StringComparison.InvariantCultureIgnoreCase) 
+                    && s.ChatId == chatId 
+                    && s.Predicate == predicate);
+
+            if (ntTask != null)
+            {
+                Subscriptions.Remove(ntTask);
+            }
+        }
+
         public async Task<bool> ConditionAlreadyApplies(string asset, long chatId, Func<decimal, bool> predicate)
         {
             var assetValue = await _exchangeRatesProvider.GetAssetValue(asset);
@@ -46,5 +59,6 @@ namespace TelegramAssistant.NotificationSubscribers
             return Subscriptions.Any(s => s.Asset.Equals(asset, StringComparison.InvariantCultureIgnoreCase)
                                                 && s.ChatId == chatId && s.Predicate == predicate);
         }
+
     }
 }

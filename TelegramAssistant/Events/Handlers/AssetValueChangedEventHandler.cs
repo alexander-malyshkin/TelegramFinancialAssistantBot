@@ -1,19 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Telegram.Bot;
+using TelegramAssistant.Contracts;
 
 namespace TelegramAssistant.Events.Handlers
 {
-    class AssetValueChangedEventHandler
+    class AssetValueChangedEventHandler : IAssetValueChangedEventHandler
     {
         private readonly ITelegramBotClient _telegramBotClient;
         private const string NtFormat = "Актив {0} теперь имеет цену {1}";
 
-        public AssetValueChangedEventHandler(ITelegramBotClient telegramBotClient)
+        public AssetValueChangedEventHandler(App app)
         {
-            _telegramBotClient = telegramBotClient;
+            _telegramBotClient = app.Bot;
         }
 
         public async Task Handle(object sender, AssetValueChangedEventArgs args)

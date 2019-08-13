@@ -85,7 +85,7 @@ namespace TelegramAssistant.Commands
                 return new QuoteValueCriterionSubscriptionResponse
                 {
                     Success = false,
-                    ResultMessage = $"Не удалось подписаться на событие"
+                    ResultMessage = $"Не удалось подписаться на событие. {e.Message}"
                 };
             }
         }
