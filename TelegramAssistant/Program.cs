@@ -41,7 +41,7 @@ namespace TelegramAssistant
                     services.AddSingleton(GetSensitiveSettings(_appSettings));
                     services.AddSingleton(_appSettings.NotificationSettings);
                     services.AddSingleton<IExchangeRatesProvider, MockExchangeRatesProvider>();
-                    services.AddSingleton<INotificationSubscriber, NotificationSubscriber>();
+                    services.AddSingleton<ISubscriptionsManager, SubscriptionsManager>();
 
                     services.AddScoped<App>();
                     services.AddScoped<IAssetValueChangedEventHandler, AssetValueChangedEventHandler>();

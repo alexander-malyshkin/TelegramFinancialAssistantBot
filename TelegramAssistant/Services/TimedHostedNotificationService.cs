@@ -13,19 +13,19 @@ namespace TelegramAssistant.Services
     class TimedHostedNotificationService : TimedHostedServiceBase
     {
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
-        private readonly INotificationSubscriber _notificationSubscriber;
+        private readonly ISubscriptionsManager _subscriptionsManager;
         internal event EventHandler<AssetValueChangedEventArgs> AssetValueChangedEvent;
 
         public TimedHostedNotificationService(
             NotificationSettings notificationSettings, 
             IExchangeRatesProvider exchangeRatesProvider,
             IAssetValueChangedEventHandler assetValueChangedEventHandler, 
-            INotificationSubscriber notificationSubscriber) 
+            ISubscriptionsManager subscriptionsManager) 
             : base(notificationSettings.IntervalMilliseconds, 
                 notificationSettings.DueTimeSpanSeconds)
         {
             _exchangeRatesProvider = exchangeRatesProvider;
-            _notificationSubscriber = notificationSubscriber;
+            _subscriptionsManager = subscriptionsManager;
             AssetValueChangedEvent += async (sender, args) => await assetValueChangedEventHandler.Handle(sender, args);
         }
 
@@ -36,7 +36,7 @@ namespace TelegramAssistant.Services
 
         private void SimulateAssetValueChanges()
         {
-            var notificationSubscriptions = NotificationSubscriber.Subscriptions;
+            var notificationSubscriptions = SubscriptionsManager.Subscriptions;
 
             var assets = _exchangeRatesProvider.GetAssets().GetAwaiter().GetResult().ToArray();
             var rnd = new Random();
@@ -64,7 +64,7 @@ namespace TelegramAssistant.Services
 
                 foreach (var cond in matchedConditions)
                 {
-                    _notificationSubscriber.Unsubscribe(cond.Asset, cond.ChatId, cond.Predicate);
+                    _subscriptionsManager.Unsubscribe(cond.Asset, cond.ChatId, cond.Predicate);
                 }
             }
         }

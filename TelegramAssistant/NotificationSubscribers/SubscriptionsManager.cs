@@ -6,14 +6,14 @@ using TelegramAssistant.Contracts;
 
 namespace TelegramAssistant.NotificationSubscribers
 {
-    class NotificationSubscriber : INotificationSubscriber
+    class SubscriptionsManager : ISubscriptionsManager
     {
         public static Collection<NotificationTask> Subscriptions { get; } 
             = new Collection<NotificationTask>();
 
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
 
-        public NotificationSubscriber(IExchangeRatesProvider exchangeRatesProvider)
+        public SubscriptionsManager(IExchangeRatesProvider exchangeRatesProvider)
         {
             _exchangeRatesProvider = exchangeRatesProvider;
         }
