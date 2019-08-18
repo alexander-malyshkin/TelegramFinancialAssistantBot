@@ -41,18 +41,17 @@ namespace TelegramAssistant.Commands
         {
             try
             {
-                var conditionAlreadyApplies = await _notificationSubscriber.ConditionAlreadyApplies(_asset, _request.ChatId, _request.Predicate);
+                var conditionAlreadyApplies = await _exchangeRatesProvider.ConditionAlreadyApplies(_asset, _request.ChatId, _request.Predicate);
                 if(conditionAlreadyApplies)
                 {
                     return new QuoteValueCriterionSubscriptionResponse
                     {
-                        Success = true,
+                        Success = false,
                         ResultMessage = "Указанный актив уже удовлетворяет условию"
                     };
                 }
 
-                var alreadySubscribed =
-                    await _notificationSubscriber.AlreadySubscribed(_asset, _request.ChatId, _request.Predicate);
+                var alreadySubscribed = await _notificationSubscriber.AlreadySubscribed(_asset, _request.ChatId, _request.Predicate);
                 if (alreadySubscribed)
                 {
                     return new QuoteValueCriterionSubscriptionResponse
