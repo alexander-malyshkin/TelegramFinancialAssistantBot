@@ -27,14 +27,14 @@ namespace TelegramAssistant
         private string _internalErrorMsg = "Что-то пошло не так";
         private string _notImplementedExcMsg = "Данный функционал не поддерживается, свяжитесь с разработчиком";
         private IExchangeRatesProvider _ratesProvider;
-        private INotificationSubscriber _notificationSubscriber;
+        private ISubscriptionsManager _subscriptionsManager;
         private const int _chatInteractionDelay = 500;
 
-        public App(IExchangeRatesProvider ratesProvider, INotificationSubscriber ntSubscriber,
+        public App(IExchangeRatesProvider ratesProvider, ISubscriptionsManager ntSubscriber,
             AppSettings appSettings, SensitiveSettings sensitiveConfiguration)
         {
             _ratesProvider = ratesProvider;
-            _notificationSubscriber = ntSubscriber;
+            _subscriptionsManager = ntSubscriber;
 
             AppSettings = appSettings;
             if(AppSettings == null)
@@ -94,7 +94,7 @@ namespace TelegramAssistant
                         await Task.Delay(_chatInteractionDelay);
                         var quoteRequest = new QuoteValueCriterionSubscriptionRequest(cmdArgs, message.Chat.Id);
                         var quoteCmd = new QuoteValueCriterionSubscriptionCommand(quoteRequest, 
-                            _notificationSubscriber, _ratesProvider);
+                            _subscriptionsManager, _ratesProvider);
                         var requestValid = await quoteCmd.Validate();
 
                         if (!requestValid)

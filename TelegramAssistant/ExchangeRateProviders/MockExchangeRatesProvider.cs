@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using TelegramAssistant.Contracts;
-using TelegramAssistant.Types;
 
 namespace TelegramAssistant.ExchangeRateProviders
 {
@@ -35,6 +34,16 @@ namespace TelegramAssistant.ExchangeRateProviders
         public async Task<ICollection<string>> GetAssets()
         {
             return _assets;
+        }
+
+        public async Task<bool> ConditionAlreadyApplies(string asset, long chatId, Func<decimal, bool> predicate)
+        {
+            var foundAsset = _assets.FirstOrDefault(a => a.Equals(asset, StringComparison.InvariantCultureIgnoreCase));
+            if(foundAsset == null)
+                throw new ArgumentException($"Актив {asset} не поддерживается");
+
+            var assetValue = await GetAssetValue(foundAsset);
+            return predicate(assetValue);
         }
 
         private decimal GetRandomValue()

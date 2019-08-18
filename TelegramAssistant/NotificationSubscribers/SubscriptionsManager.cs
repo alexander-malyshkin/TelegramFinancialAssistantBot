@@ -6,24 +6,13 @@ using TelegramAssistant.Contracts;
 
 namespace TelegramAssistant.NotificationSubscribers
 {
-    class NotificationSubscriber : INotificationSubscriber
+    class SubscriptionsManager : ISubscriptionsManager
     {
         public static Collection<NotificationTask> Subscriptions { get; } 
             = new Collection<NotificationTask>();
 
-        private readonly IExchangeRatesProvider _exchangeRatesProvider;
-
-        public NotificationSubscriber(IExchangeRatesProvider exchangeRatesProvider)
-        {
-            _exchangeRatesProvider = exchangeRatesProvider;
-        }
-
         public async Task Subscribe(string asset, long chatId, Func<decimal, bool> predicate)
         {
-            var assetValue = await _exchangeRatesProvider.GetAssetValue(asset);
-            if (predicate(assetValue))
-                throw new NotSupportedException("Условие по данному активу уже выполняется");
-
             if(await AlreadySubscribed(asset, chatId, predicate))
                 throw new NotSupportedException("Вы уже подписаны на данное событие");
 
@@ -46,12 +35,6 @@ namespace TelegramAssistant.NotificationSubscribers
             {
                 Subscriptions.Remove(ntTask);
             }
-        }
-
-        public async Task<bool> ConditionAlreadyApplies(string asset, long chatId, Func<decimal, bool> predicate)
-        {
-            var assetValue = await _exchangeRatesProvider.GetAssetValue(asset);
-            return predicate(assetValue);
         }
 
         public async Task<bool> AlreadySubscribed(string asset, long chatId, Func<decimal, bool> predicate)

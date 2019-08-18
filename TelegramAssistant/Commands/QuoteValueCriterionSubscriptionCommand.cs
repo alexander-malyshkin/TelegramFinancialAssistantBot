@@ -11,16 +11,16 @@ namespace TelegramAssistant.Commands
     internal class QuoteValueCriterionSubscriptionCommand : ICommand<QuoteValueCriterionSubscriptionResponse>
     {
         private readonly QuoteValueCriterionSubscriptionRequest _request;
-        private readonly INotificationSubscriber _notificationSubscriber;
+        private readonly ISubscriptionsManager _subscriptionsManager;
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
 
         private string _asset;
 
         public QuoteValueCriterionSubscriptionCommand(QuoteValueCriterionSubscriptionRequest request, 
-            INotificationSubscriber notificationSubscriber, IExchangeRatesProvider exchangeRatesProvider)
+            ISubscriptionsManager subscriptionsManager, IExchangeRatesProvider exchangeRatesProvider)
         {
             _request = request ?? throw new ArgumentException($"Не указан запрос {nameof(QuoteValueCriterionSubscriptionRequest)}");
-            _notificationSubscriber = notificationSubscriber ?? throw new ArgumentException($"Не указан {nameof(INotificationSubscriber)}");
+            _subscriptionsManager = subscriptionsManager ?? throw new ArgumentException($"Не указан {nameof(ISubscriptionsManager)}");
             _exchangeRatesProvider = exchangeRatesProvider ?? throw new ArgumentException("Не указан провайдер котировок");
         }
 
@@ -41,18 +41,17 @@ namespace TelegramAssistant.Commands
         {
             try
             {
-                var conditionAlreadyApplies = await _notificationSubscriber.ConditionAlreadyApplies(_asset, _request.ChatId, _request.Predicate);
+                var conditionAlreadyApplies = await _exchangeRatesProvider.ConditionAlreadyApplies(_asset, _request.ChatId, _request.Predicate);
                 if(conditionAlreadyApplies)
                 {
                     return new QuoteValueCriterionSubscriptionResponse
                     {
-                        Success = true,
+                        Success = false,
                         ResultMessage = "Указанный актив уже удовлетворяет условию"
                     };
                 }
 
-                var alreadySubscribed =
-                    await _notificationSubscriber.AlreadySubscribed(_asset, _request.ChatId, _request.Predicate);
+                var alreadySubscribed = await _subscriptionsManager.AlreadySubscribed(_asset, _request.ChatId, _request.Predicate);
                 if (alreadySubscribed)
                 {
                     return new QuoteValueCriterionSubscriptionResponse
@@ -73,7 +72,7 @@ namespace TelegramAssistant.Commands
 
             try
             {
-                await _notificationSubscriber.Subscribe(_asset, _request.ChatId, _request.Predicate);
+                await _subscriptionsManager.Subscribe(_asset, _request.ChatId, _request.Predicate);
                 return new QuoteValueCriterionSubscriptionResponse
                 {
                     Success = true,
