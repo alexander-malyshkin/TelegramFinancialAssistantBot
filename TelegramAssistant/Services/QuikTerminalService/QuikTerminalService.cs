@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using Ecng.Common;
-using NPOI.SS.Formula.Functions;
+using Microsoft.Extensions.Hosting;
 using StockSharp.BusinessEntities;
 using StockSharp.Logging;
 using StockSharp.Quik;
-using TelegramAssistant.Commands;
 using TelegramAssistant.Events;
 using TelegramAssistant.Types.Responses;
 
 namespace TelegramAssistant.Services.QuikTerminalService
 {
-    public class QuikTerminalService : IDisposable
+    public class QuikTerminalService : IDisposable, IHostedService
     {
         private QuikTrader _quikTrader;
         private readonly ConsoleLogListener _consoleLogListener;
@@ -92,7 +92,7 @@ namespace TelegramAssistant.Services.QuikTerminalService
                 Content = sec
 
             };
-            return Task.FromResult(response);
+            return new Task<IResponse>( (() => response));
 
         }
 
@@ -192,6 +192,17 @@ namespace TelegramAssistant.Services.QuikTerminalService
             {
                 //TODO
             }
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+           _quikTrader.Disconnect();
+           return Task.CompletedTask;
         }
     }
 }

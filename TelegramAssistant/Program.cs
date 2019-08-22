@@ -6,10 +6,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TelegramAssistant.Contracts;
-using TelegramAssistant.Events.Handlers;
 using TelegramAssistant.ExchangeRateProviders;
 using TelegramAssistant.NotificationSubscribers;
 using TelegramAssistant.Services;
+using TelegramAssistant.Services.QuikTerminalService;
 using TelegramAssistant.Settings;
 
 namespace TelegramAssistant
@@ -29,11 +29,9 @@ namespace TelegramAssistant
                     
                     
                     services.AddSingleton<ISubscriptionsManager, SubscriptionsManager>();
-                    
-                    services.AddScoped<IAssetValueChangedEventHandler, AssetValueChangedEventHandler>();
-
-                    services.AddHostedService<TimedHostedNotificationService>();
+                    services.AddHostedService<QuikTerminalService>();
                     services.AddHostedService<BotService>();
+                    
                 })
                 .UseConsoleLifetime();
 
