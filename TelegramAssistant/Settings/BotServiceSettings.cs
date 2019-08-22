@@ -1,6 +1,6 @@
 ﻿namespace TelegramAssistant.Settings
 {
-    public class AppSettings
+    public class BotServiceSettings
     {
         public string SensitiveConfigFile { get; set; }
         public NotificationSettings NotificationSettings { get; set; }

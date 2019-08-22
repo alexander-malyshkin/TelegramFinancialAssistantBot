@@ -1,0 +1,197 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Security;
+using System.Threading.Tasks;
+using Ecng.Common;
+using NPOI.SS.Formula.Functions;
+using StockSharp.BusinessEntities;
+using StockSharp.Logging;
+using StockSharp.Quik;
+using TelegramAssistant.Commands;
+using TelegramAssistant.Events;
+using TelegramAssistant.Types.Responses;
+
+namespace TelegramAssistant.Services.QuikTerminalService
+{
+    public class QuikTerminalService : IDisposable
+    {
+        private QuikTrader _quikTrader;
+        private readonly ConsoleLogListener _consoleLogListener;
+        private readonly LogManager _logManager;
+
+
+        private readonly Dictionary<Security, HashSet<IQuoteReceiver>> _subscribersToQuotes;
+        private readonly Dictionary<string, Security> _securities;
+
+
+        public QuikTerminalService()
+        {
+            _logManager = new LogManager();
+            _consoleLogListener = new ConsoleLogListener();
+
+            _subscribersToQuotes = new Dictionary<Security, HashSet<IQuoteReceiver>>();
+            _securities = new Dictionary<string, Security>();
+
+            ConfigureAndConnect();
+            //private readonly FileLogListener _fileLogListener = new FileLogListener("trades_mxi3_16");
+        }
+
+
+        public Task<IResponse> SubscribeToQuote(Security security, IQuoteReceiver quoteReceiver)
+        {
+            Task<IResponse> result = new Task<IResponse>(() =>
+            {
+                var response = new SubscribeToQuoteResponse
+                {
+                    ResultMessage = "Successfully subscribed",
+                    Success = true,
+                   
+                };
+
+                if (!_subscribersToQuotes.ContainsKey(security))
+                {
+                    try
+                    {
+                        _quikTrader.RegisterSecurity(security);
+                        _quikTrader.RegisterMarketDepth(security);
+                        _subscribersToQuotes.Add(security, new HashSet<IQuoteReceiver>() {quoteReceiver});
+
+                        return response;
+                    }
+                    catch (Exception e)
+                    {
+                        response.Success = false;
+                        response.ResultMessage = $"error_{e.Message}";
+                        return response;
+                    }
+                }
+
+                if (!_subscribersToQuotes[security].Contains(quoteReceiver))
+                {
+                    _subscribersToQuotes[security].Add(quoteReceiver);
+                    return response;
+                }
+
+                response.ResultMessage = "Already subscribed";
+                response.Success = false;
+                return response;
+            });
+
+            return result;
+        }
+
+
+        public Task<IResponse>  GetSecurity(string ticker)
+        {
+            var sec = _securities[ticker];
+
+            var response =  new GetSecurityResponse()
+            {
+                Success = sec != null,
+                Content = sec
+
+            };
+            return Task.FromResult(response);
+
+        }
+
+        private void ConfigureAndConnect()
+        {
+            if (_quikTrader == null)
+            {
+                _quikTrader = new QuikTrader
+                {
+                    LuaFixServerAddress = "127.0.0.1:5001".To<EndPoint>(),
+                    LuaLogin = "quik",
+                    LuaPassword = "quik".To<SecureString>()
+                };
+
+
+                _quikTrader.ClearCache();
+                _quikTrader.LogLevel = LogLevels.Info;
+                _logManager.Sources.Add(_quikTrader);
+                _logManager.Listeners.Add(_consoleLogListener);
+                _quikTrader.RequestAllSecurities = true;
+
+
+                _quikTrader.ReConnectionSettings.WorkingTime = ExchangeBoard.Forts.WorkingTime;
+                _quikTrader.Connect();
+
+
+                _quikTrader.NewSecurities += securities =>
+                {
+                    foreach (var security in securities)
+                    {
+                        if (!_securities.ContainsKey(security.Name))
+                        {
+                            _securities.Add(security.Name, security);
+                        }
+                    }
+                };
+                _quikTrader.MarketDepthsChanged += (depths) => Notify_Subscribers_MarketDepthsChanged(depths);
+                
+
+                //_quikTrader.Connected += () => sender.Tell(ConnectedMsg.Inst());
+
+                //_quikTrader.Disconnected += () => sender.Tell(DisconnectedMsg.Inst());
+
+                //_quikTrader.Restored += () => sender.Tell(ConnectionRestoredMsg.Inst());
+
+                //_quikTrader.TimeOut += () => sender.Tell(ConnectionErrorMsg.Inst("connection timed out"));
+
+                //_quikTrader.ConnectionError += error => sender.Tell(ConnectionErrorMsg.Inst(error.Message));
+
+
+                //// подписываемся на ошибку обработки данных (транзакций и маркет)
+                //_quikTrader.Error += error =>
+                //    this.GuiAsync(() => MessageBox.Show(this, error.ToString(), "Ошибка обработки данных"));
+
+
+                // подписываемся на ошибку подписки маркет-данных
+                //_quikTrader.MarketDataSubscriptionFailed += (security, type, error) =>
+                ////    this.GuiAsync(() => MessageBox.Show(this, error.ToString(), LocalizedStrings.Str2956Params.Put(type, security)));
+
+
+                //_quikTrader.NewSecurities += securities =>
+                //{
+                //    var secsFORTS = securities.Where(s=>s.Board == ExchangeBoard.Forts && s.Name.ToUpper().StartsWith("SIH9") ).ToList();
+
+
+                //    if (!secsFORTS.IsNullOrEmpty() )
+                //    {
+                //       _quikTrader.RegisterSecurity(secsFORTS.First(), null, null, null, MarketDataBuildModes.Load, null);
+                //        foreach (var subscriberToSecurity in _subscribersToSecurities)
+                //        {
+                //            subscriberToSecurity.Tell(SecListMsg.Inst(secsFORTS));
+                //        }
+                //    }
+
+                //};
+            }
+        }
+
+        private void Notify_Subscribers_MarketDepthsChanged(IEnumerable<MarketDepth> depths)
+        {
+            foreach (var depth in depths)
+            {
+                foreach (var quoteReceiver in _subscribersToQuotes[depth.Security])
+                {
+                    quoteReceiver.HandleQuote(depth);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                _quikTrader.Disconnect();
+            }
+            catch (Exception e)
+            {
+                //TODO
+            }
+        }
+    }
+}
