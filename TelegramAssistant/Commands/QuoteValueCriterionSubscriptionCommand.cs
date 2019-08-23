@@ -39,15 +39,18 @@ namespace TelegramAssistant.Commands
 
         public async Task<QuoteValueCriterionSubscriptionResponse> Process()
         {
+            decimal currentValue;
             try
             {
-                var conditionAlreadyApplies = await _exchangeRatesProvider.ConditionAlreadyApplies(_asset, _request.ChatId, _request.Predicate);
-                if(conditionAlreadyApplies)
+                currentValue = await _exchangeRatesProvider.GetAssetValue(_asset);
+                var conditionAlreadyApplies = _request.Predicate(currentValue);
+
+                if (conditionAlreadyApplies)
                 {
                     return new QuoteValueCriterionSubscriptionResponse
                     {
                         Success = false,
-                        ResultMessage = "Указанный актив уже удовлетворяет условию"
+                        ResultMessage = $"Указанный актив уже удовлетворяет условию. Текущая цена: {currentValue}"
                     };
                 }
 
@@ -60,6 +63,8 @@ namespace TelegramAssistant.Commands
                         ResultMessage = "Вы уже подписаны на данное событие"
                     };
                 }
+
+                
             }
             catch (Exception e)
             {
@@ -76,7 +81,8 @@ namespace TelegramAssistant.Commands
                 return new QuoteValueCriterionSubscriptionResponse
                 {
                     Success = true,
-                    ResultMessage = "Вы успешно подписались на событие"
+                    ResultMessage = $"Вы успешно подписались на событие. Текущая цена: {currentValue}",
+                    CurrentPrice = currentValue
                 };
             }
             catch (Exception e)
