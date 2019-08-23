@@ -25,21 +25,23 @@ namespace TelegramAssistant
         private readonly BotServiceSettings _botServiceSettings;
         private readonly SensitiveSettings _sensitiveConfiguration;
 
-        private TelegramBotClient _botClient;
+        private ITelegramBotClient _botClient;
         private readonly ISubscriptionsManager _subscriptionsManager;
 
 
         private ConcurrentDictionary<Security, HashSet<QuoteValueCriterionRequest>> _quoteValueCriterionRequests;
 
         public BotService(ISubscriptionsManager ntSubscriber, BotServiceSettings botServiceSettings,
-            SensitiveSettings sensitiveConfiguration)
+            SensitiveSettings sensitiveConfiguration, ITelegramBotClient botClient)
         {
-            ExceptionHelper.CheckIfNull(_botServiceSettings);
+            ExceptionHelper.CheckIfNull(botServiceSettings);
             ExceptionHelper.CheckIfNull(sensitiveConfiguration);
 
 
             _botServiceSettings = botServiceSettings;
             _sensitiveConfiguration = sensitiveConfiguration;
+            _botClient = botClient;
+            QuickTerminalConsole.QuickTerminalProgram.SomethingHappennedEvent += (sender, args) => HandleQuote(new MarketDepth(new Security()));
 
             _subscriptionsManager =
                 ntSubscriber ?? throw new ArgumentException($"Не указан {nameof(ISubscriptionsManager)}");
@@ -52,11 +54,6 @@ namespace TelegramAssistant
 
         private void ConfigureBotClient()
         {
-            _botClient = new TelegramBotClient(_sensitiveConfiguration.BotApiKey,
-                _sensitiveConfiguration.ProxyEnabled
-                    ? new WebProxy(_sensitiveConfiguration.Proxy)
-                    : null);
-
             _botClient.OnMessage += BotOnMessage;
         }
 

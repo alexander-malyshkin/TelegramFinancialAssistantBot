@@ -5,10 +5,14 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using QuickTerminalConsole;
+using StockSharp.BusinessEntities;
+using Telegram.Bot;
 using TelegramAssistant.Contracts;
 using TelegramAssistant.ExchangeRateProviders;
 using TelegramAssistant.NotificationSubscribers;
 using TelegramAssistant.Services;
+using TelegramAssistant.Services.MockServices;
 using TelegramAssistant.Services.QuikTerminalService;
 using TelegramAssistant.Settings;
 
@@ -26,10 +30,12 @@ namespace TelegramAssistant
                 {
                     services.AddSingleton(_botServiceSettings);
                     services.AddSingleton(SettingsHelper.GetSensitiveSettings(_botServiceSettings));
-                    
-                    
+                    services.AddSingleton<IConnector, MockQuickConnector>();
+                    services.AddSingleton<IQuikTerminalService, MockQuickTerminalService>();
                     services.AddSingleton<ISubscriptionsManager, SubscriptionsManager>();
-                    services.AddHostedService<QuikTerminalService>();
+                    services.AddSingleton<ITelegramBotClient, MockTelegramBotClient>();
+                    
+                    services.AddHostedService<MockQuickTerminalService>();
                     services.AddHostedService<BotService>();
                     
                 })
