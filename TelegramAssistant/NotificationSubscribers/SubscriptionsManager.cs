@@ -12,9 +12,9 @@ namespace TelegramAssistant.NotificationSubscribers
 {
     class SubscriptionsManager : ISubscriptionsManager
     {
-        private readonly QuikTerminalService _quikTerminalService;
+        private readonly IQuikTerminalService _quikTerminalService;
 
-        public SubscriptionsManager(QuikTerminalService quikTerminalService)
+        public SubscriptionsManager(IQuikTerminalService quikTerminalService)
         {
             _quikTerminalService = quikTerminalService;
         }

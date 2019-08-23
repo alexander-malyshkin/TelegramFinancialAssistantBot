@@ -14,7 +14,7 @@ using TelegramAssistant.Types.Responses;
 
 namespace TelegramAssistant.Services.QuikTerminalService
 {
-    public class QuikTerminalService : IDisposable, IHostedService
+    public class QuikTerminalService : IDisposable, IHostedService, IQuikTerminalService
     {
         private QuikTrader _quikTrader;
         private readonly ConsoleLogListener _consoleLogListener;
