@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\QuickTerminalConsole\QuickTerminalConsole.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Settings\AppSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
