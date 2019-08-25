@@ -34,7 +34,7 @@ namespace TelegramAssistant
         public BotService(ISubscriptionsManager ntSubscriber, BotServiceSettings botServiceSettings,
             SensitiveSettings sensitiveConfiguration)
         {
-            ExceptionHelper.CheckIfNull(_botServiceSettings);
+            ExceptionHelper.CheckIfNull(botServiceSettings);
             ExceptionHelper.CheckIfNull(sensitiveConfiguration);
 
 

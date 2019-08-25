@@ -17,11 +17,11 @@ namespace TelegramAssistant.Services
     //    internal event EventHandler<AssetValueChangedEventArgs> AssetValueChangedEvent;
 
     //    public TimedHostedNotificationService(
-    //        NotificationSettings notificationSettings, 
+    //        NotificationSettings notificationSettings,
     //        IExchangeRatesProvider exchangeRatesProvider,
-    //        IAssetValueChangedEventHandler assetValueChangedEventHandler, 
-    //        ISubscriptionsManager subscriptionsManager) 
-    //        : base(notificationSettings.IntervalMilliseconds, 
+    //        IAssetValueChangedEventHandler assetValueChangedEventHandler,
+    //        ISubscriptionsManager subscriptionsManager)
+    //        : base(notificationSettings.IntervalMilliseconds,
     //            notificationSettings.DueTimeSpanSeconds)
     //    {
     //        _exchangeRatesProvider = exchangeRatesProvider;

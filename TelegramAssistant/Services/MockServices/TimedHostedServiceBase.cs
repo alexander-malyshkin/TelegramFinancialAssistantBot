@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace TelegramAssistant.Services
 {
-    internal abstract class TimedHostedServiceBase : IHostedService, IDisposable
+    public abstract class TimedHostedServiceBase : IHostedService, IDisposable
     {
         private Timer _timer;
         private readonly int _intervalMs;

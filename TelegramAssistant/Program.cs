@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TelegramAssistant.Contracts;
+using TelegramAssistant.db_adapter;
 using TelegramAssistant.ExchangeRateProviders;
 using TelegramAssistant.NotificationSubscribers;
 using TelegramAssistant.Services;
@@ -26,11 +27,18 @@ namespace TelegramAssistant
                 {
                     services.AddSingleton(_botServiceSettings);
                     services.AddSingleton(SettingsHelper.GetSensitiveSettings(_botServiceSettings));
-                    
-                    
+
+                    services.AddSingleton<QuikTerminalService>();
+
+               //     services.AddSingleton<trading_der_dbContext>();
+
                     services.AddSingleton<ISubscriptionsManager, SubscriptionsManager>();
-                    services.AddHostedService<QuikTerminalService>();
+                    
                     services.AddHostedService<BotService>();
+                   // services.AddHostedService<trading_der_dbContext>();
+                    services.AddHostedService<QuikTerminalService>();
+
+                   
                     
                 })
                 .UseConsoleLifetime();

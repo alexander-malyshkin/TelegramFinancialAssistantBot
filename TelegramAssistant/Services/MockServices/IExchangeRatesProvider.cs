@@ -10,4 +10,4 @@ namespace TelegramAssistant.Contracts
         Task<ICollection<string>> GetAssets();
         Task<bool> ConditionAlreadyApplies(string asset, long chatId, Func<decimal, bool> predicate);
     }
-}
+} 
