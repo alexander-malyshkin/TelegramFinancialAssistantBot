@@ -58,6 +58,10 @@ namespace TelegramAssistant.Types.Requests
                 Predicate = d => d == value;
                 Operator = "=";
             }
+            else
+            {
+                throw new ArgumentException("Invalid operator");
+            }
         }
 
         public string Asset { get; set; }
