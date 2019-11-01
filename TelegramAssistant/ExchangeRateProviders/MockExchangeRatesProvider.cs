@@ -40,7 +40,6 @@ namespace TelegramAssistant.ExchangeRateProviders
         {
             var rnd = new Random();
             return rnd.Next(_maxAssetValue);
-            //return 130m;
         }
     }
 }
