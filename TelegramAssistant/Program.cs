@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,18 +18,6 @@ namespace TelegramAssistant
 
         public static async Task Main(string[] args)
         {
-            //var serviceContainer = new ServiceContainer();
-            //serviceContainer.AddService(typeof(IExchangeRatesProvider), new MockExchangeRatesProvider());
-            //serviceContainer.AddService(typeof(INotificationSubscriber), new NotificationSubscriber(new MockExchangeRatesProvider()));
-
-            //var app = new App(serviceContainer);
-            //serviceContainer.AddService(typeof(IHostedService), 
-            //    new TimedHostedNotificationService(app.AppSettings.NotificationSettings?.IntervalMilliseconds ?? 1000,
-            //        app.AppSettings.NotificationSettings?.DueTimeSpanSeconds ?? 0,
-            //        (IExchangeRatesProvider) serviceContainer.GetService(typeof(IExchangeRatesProvider))));
-            //Console.ReadLine();
-            //app.StopReceiving();
-
             _appSettings = GetAppSettings();
 
             IHostBuilder hostBuilder = new HostBuilder()
@@ -50,9 +36,6 @@ namespace TelegramAssistant
                     services.AddHostedService<CommandProcessingService>();
                 })
                 .UseConsoleLifetime();
-
-            //var h = hostBuilder.Build();
-            //var handler = (AssetValueChangedEventHandler) h.Services.GetService(typeof(AssetValueChangedEventHandler));
 
             await hostBuilder.RunConsoleAsync();
         }
