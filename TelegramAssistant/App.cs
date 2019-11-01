@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types.Enums;
@@ -24,8 +22,8 @@ namespace TelegramAssistant
         private ICollection<string> _supportedAssets;
 
         private static string _quoteUsageFormat;
-        private string _internalErrorMsg = "Что-то пошло не так";
-        private string _notImplementedExcMsg = "Данный функционал не поддерживается, свяжитесь с разработчиком";
+        private string _internalErrorMsg = MessageTexts.InternalException;
+        private string _notImplementedExcMsg = MessageTexts.NotImplementedEception;
         private IExchangeRatesProvider _ratesProvider;
         private ISubscriptionsManager _subscriptionsManager;
         private const int _chatInteractionDelay = 500;
@@ -55,10 +53,10 @@ namespace TelegramAssistant
         private void SetupUsages()
         {
             _supportedAssets = (_ratesProvider.GetAssets()).GetAwaiter().GetResult();
-            _quoteUsageFormat = @"/quote <название_актива> <оператор> <значение_актива> then <действие>. "
-                                + $"Поддерживаемые активы {string.Join(',', _supportedAssets)}. "
-                                + $"Операторы: >, >=, <, <=. "
-                                + $"Действия: signal";
+            _quoteUsageFormat = @"/quote <asset_name> <operator> <asset_value> then <action>. "
+                                + $"Supported assets {string.Join(',', _supportedAssets)}. "
+                                + $"Operators: >, >=, <, <=. "
+                                + $"Actions: signal";
         }
 
         private void ConfigureBot()

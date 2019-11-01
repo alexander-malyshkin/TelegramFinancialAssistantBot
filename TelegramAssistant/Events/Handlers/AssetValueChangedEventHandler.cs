@@ -7,7 +7,7 @@ namespace TelegramAssistant.Events.Handlers
     class AssetValueChangedEventHandler : IAssetValueChangedEventHandler
     {
         private readonly ITelegramBotClient _telegramBotClient;
-        private const string NtFormat = "Актив {0} теперь имеет цену {1}";
+        private const string NtFormat = MessageTexts.AssetCurrentValue;
 
         public AssetValueChangedEventHandler(App app)
         {

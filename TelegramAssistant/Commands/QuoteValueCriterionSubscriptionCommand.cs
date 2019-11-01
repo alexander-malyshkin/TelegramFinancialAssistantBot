@@ -19,9 +19,9 @@ namespace TelegramAssistant.Commands
         public QuoteValueCriterionSubscriptionCommand(QuoteValueCriterionSubscriptionRequest request, 
             ISubscriptionsManager subscriptionsManager, IExchangeRatesProvider exchangeRatesProvider)
         {
-            _request = request ?? throw new ArgumentException($"Не указан запрос {nameof(QuoteValueCriterionSubscriptionRequest)}");
-            _subscriptionsManager = subscriptionsManager ?? throw new ArgumentException($"Не указан {nameof(ISubscriptionsManager)}");
-            _exchangeRatesProvider = exchangeRatesProvider ?? throw new ArgumentException("Не указан провайдер котировок");
+            _request = request ?? throw new ArgumentException($"{nameof(QuoteValueCriterionSubscriptionRequest)} {MessageTexts.NotSpecified}");
+            _subscriptionsManager = subscriptionsManager ?? throw new ArgumentException($"{nameof(ISubscriptionsManager)} {MessageTexts.NotSpecified}");
+            _exchangeRatesProvider = exchangeRatesProvider ?? throw new ArgumentException($"{nameof(IExchangeRatesProvider)} {MessageTexts.NotSpecified}");
         }
 
         public async Task<bool> Validate()
@@ -50,7 +50,7 @@ namespace TelegramAssistant.Commands
                     return new QuoteValueCriterionSubscriptionResponse
                     {
                         Success = false,
-                        ResultMessage = $"Указанный актив уже удовлетворяет условию. Текущая цена: {currentValue}"
+                        ResultMessage = string.Format(MessageTexts.ConditionAlreadySatisfied, currentValue)
                     };
                 }
 
@@ -60,18 +60,18 @@ namespace TelegramAssistant.Commands
                     return new QuoteValueCriterionSubscriptionResponse
                     {
                         Success = true,
-                        ResultMessage = "Вы уже подписаны на данное событие"
+                        ResultMessage = MessageTexts.AlreadySubscribed
                     };
                 }
 
                 
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new QuoteValueCriterionSubscriptionResponse
                 {
                     Success = false,
-                    ResultMessage = "Не получилось проверить выполнение условия по указанному активу"
+                    ResultMessage = MessageTexts.ConditionCheckFailed
                 };
             }
 
@@ -81,7 +81,7 @@ namespace TelegramAssistant.Commands
                 return new QuoteValueCriterionSubscriptionResponse
                 {
                     Success = true,
-                    ResultMessage = $"Вы успешно подписались на событие. Текущая цена: {currentValue}",
+                    ResultMessage = string.Format(MessageTexts.SubscribedSuccessfully, currentValue),
                     CurrentPrice = currentValue
                 };
             }
@@ -90,7 +90,7 @@ namespace TelegramAssistant.Commands
                 return new QuoteValueCriterionSubscriptionResponse
                 {
                     Success = false,
-                    ResultMessage = $"Не удалось подписаться на событие. {e.Message}"
+                    ResultMessage = $"{MessageTexts.SubscriptionFailed}. {e.Message}"
                 };
             }
         }

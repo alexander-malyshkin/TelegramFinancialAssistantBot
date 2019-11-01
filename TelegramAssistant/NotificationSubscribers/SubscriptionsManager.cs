@@ -14,7 +14,7 @@ namespace TelegramAssistant.NotificationSubscribers
         public async Task Subscribe(string asset, long chatId, Func<decimal, bool> predicate)
         {
             if(await AlreadySubscribed(asset, chatId, predicate))
-                throw new NotSupportedException("Вы уже подписаны на данное событие");
+                throw new NotSupportedException(MessageTexts.AlreadySubscribed);
 
             Subscriptions.Add(new NotificationTask
             {
